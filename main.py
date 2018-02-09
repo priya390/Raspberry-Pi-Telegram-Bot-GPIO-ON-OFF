@@ -5,7 +5,9 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
 import time
 import RPi.GPIO as GPIO
+import Adafruit_DHT
 led = 5
+DHT_pin = 27
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(led, GPIO.OUT, initial = 0)
@@ -29,7 +31,15 @@ def off(bot, update):
     GPIO.output(led, GPIO.LOW)
     update.message.reply_text('LED turned OFF')
 
+def hum(bot, update):
+    """Send a message when the command /hum is issued."""
+    humidity = Adafruit_DHT.read_retry(11, DHT_pin)[0]
+    update.message.reply_text("Humidity: {} %".format(humidity))
 
+def temp(bot, update):
+    """Send a message when the command /temp is issued."""
+    temperature = Adafruit_DHT.read_retry(11, DHT_pin)[1]
+    update.message.reply_text("Temperature: {} C".format(temperature))
 
 def echo(bot, update):
     """Echo the user message."""
@@ -39,7 +49,6 @@ def echo(bot, update):
 def error(bot, update, error):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, error)
-
 
 def main():
     """Start the bot."""
@@ -52,6 +61,8 @@ def main():
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("on", on))
     dp.add_handler(CommandHandler("off", off))
+    dp.add_handler(CommandHandler("temp", temp))
+    dp.add_handler(CommandHandler("hum", hum))
 
     # on noncommand i.e message - echo the message on Telegram
     dp.add_handler(MessageHandler(Filters.text, echo))
